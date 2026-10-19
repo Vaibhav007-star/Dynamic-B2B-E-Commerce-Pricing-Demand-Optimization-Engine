@@ -1,0 +1,25 @@
+{
+    "products_analyzed": 3484,
+    "total_baseline_revenue": 375395.56,
+    "total_optimized_revenue": 395518.85,
+    "revenue_change": 20123.29,
+    "relative_revenue_change_pct": 5.36,
+    "total_baseline_gross_profit": 186195.54,
+    "total_optimized_gross_profit": 213047.98,
+    "gross_profit_change": 26852.44,
+    "relative_gross_profit_improvement_pct": 14.42,
+    "baseline_gross_margin_pct": 49.6,
+    "optimized_gross_margin_pct": 53.87,
+    "baseline_units_demanded": 156576.4,
+    "optimized_units_demanded": 148695.7,
+    "price_actions": {
+        "price_increases": 2160,
+        "price_decreases": 1306,
+        "price_holds": 18
+    },
+    "safety_checks": {
+        "prices_below_cost": 0,
+        "max_price_delta_pct_limit": 20.0,
+        "min_gross_margin_pct_limit": 15.0
+    }
+}

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic B2B E-Commerce Pricing & Demand Optimization Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(17, 24, 39, 0.75);
+            --bg-card-hover: rgba(30, 41, 59, 0.85);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(59, 130, 246, 0.35);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --font-head: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            line-height: 1.5;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.10) 0px, transparent 50%);
+            background-attachment: fixed;
+            padding-bottom: 60px;
+        }
+
+        /* Glassmorphism Navigation */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+            background: rgba(9, 13, 22, 0.85);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+        }
+
+        .brand-text h1 {
+            font-family: var(--font-head);
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-text p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-highlight);
+        }
+
+        /* Container & Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 28px 36px;
+        }
+
+        .hero-banner {
+            margin-bottom: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .hero-banner h2 {
+            font-family: var(--font-head);
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+
+        .badge-live {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-live::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        /* Metric Grid */
+        .grid-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 22px;
+            backdrop-filter: blur(12px);
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: var(--border-highlight);
+            transform: translateY(-2px);
+            background: var(--bg-card-hover);
+        }
+
+        .card-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-value {
+            font-family: var(--font-head);
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .card-delta {
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .delta-positive {
+            color: #34d399;
+        }
+
+        .delta-neutral {
+            color: #60a5fa;
+        }
+
+        /* Two-Column Grid */
+        .grid-dashboard {
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            min-height: 380px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .chart-title {
+            font-family: var(--font-head);
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        /* Interactive Simulator */
+        .simulator-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: white;
+            font-family: var(--font-body);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .sim-result-box {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 10px;
+        }
+
+        .sim-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .sim-metric-title {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .sim-metric-val {
+            font-family: var(--font-head);
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .rationale-badge {
+            font-size: 12px;
+            background: rgba(59, 130, 246, 0.15);
+            border-left: 3px solid var(--accent-blue);
+            padding: 8px 12px;
+            border-radius: 4px;
+            color: #93c5fd;
+            line-height: 1.4;
+        }
+
+        /* Products Table */
+        .table-card {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.9);
+            padding: 12px 16px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .tag-action {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .tag-increase {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .tag-decrease {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .tag-hold {
+            background: rgba(148, 163, 184, 0.15);
+            color: #cbd5e1;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .grid-dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="brand">
+            <div class="brand-icon">⚡</div>
+            <div class="brand-text">
+                <h1>Dynamic B2B Pricing Engine</h1>
+                <p>Demand Forecasting & Margin Optimization Command Center</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <span class="badge-live">Local Machine Learning Engine Active</span>
+            <a href="/docs" class="btn btn-outline" target="_blank">Swagger API Spec</a>
+            <a href="#simulator" class="btn btn-primary">Try Pricing Simulator</a>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- Hero Section -->
+        <div class="hero-banner">
+            <div>
+                <h2>Portfolio Financial Optimization</h2>
+                <p style="color: var(--text-muted); font-size: 14px;">Real wholesale transactions analyzed from Online Retail II across 3,484 catalog SKUs.</p>
+            </div>
+        </div>
+
+        <!-- 4 Primary KPI Cards -->
+        <div class="grid-metrics">
+            <div class="card">
+                <div class="card-label">Optimized Gross Profit <span>📈</span></div>
+                <div class="card-value" style="color: #34d399;" id="kpi-profit">£213,048</div>
+                <div class="card-delta delta-positive">
+                    <span>▲ +£26,852 (+14.42%)</span> vs. Static Baseline
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-label">Optimized Net Revenue <span>💰</span></div>
+                <div class="card-value" id="kpi-revenue">£395,464</div>
+                <div class="card-delta delta-positive">
+                    <span>▲ +£20,123 (+5.36%)</span> Portfolio Uplift
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-label">Gross Margin Percentage <span>🎯</span></div>
+                <div class="card-value" style="color: #60a5fa;" id="kpi-margin">53.87%</div>
+                <div class="card-delta delta-positive">
+                    <span>▲ +4.27% pts</span> Margin Expansion
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-label">Safety Compliance Guardrail <span>🛡️</span></div>
+                <div class="card-value" style="color: #a78bfa;" id="kpi-safety">100%</div>
+                <div class="card-delta delta-neutral">
+                    <span>0 Prices Below Unit Cost</span> (Strict Floor)
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts & Simulator Grid -->
+        <div class="grid-dashboard">
+            
+            <!-- Left: Financial Comparison & Distribution Charts -->
+            <div class="card chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Static Baseline vs. Dynamic Pricing Impact</div>
+                    <span style="font-size: 12px; color: var(--text-muted);">Evaluation Period (Holdout)</span>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="financialChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Right: Interactive Live Pricing Simulator -->
+            <div class="card" id="simulator">
+                <div class="chart-header">
+                    <div class="chart-title">Live SKU Dynamic Pricing Simulator</div>
+                    <span class="badge-live" style="font-size: 11px;">Real-Time</span>
+                </div>
+                
+                <div class="simulator-form">
+                    <div class="form-group">
+                        <label>Select Sample Product</label>
+                        <select id="sim-product-select" class="form-control" onchange="loadPresetProduct()">
+                            <option value="85123A">85123A - WHITE HANGING HEART T-LIGHT HOLDER</option>
+                            <option value="22423">22423 - REGENCY CAKESTAND 3 TIER</option>
+                            <option value="84879">84879 - ASSORTED COLOUR BIRD ORNAMENT</option>
+                            <option value="47566">47566 - PARTY BUNTING</option>
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Base Price (£)</label>
+                            <input type="number" id="sim-price" step="0.05" class="form-control" value="2.95" oninput="calculateDynamicPrice()">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Cost (£)</label>
+                            <input type="number" id="sim-cost" step="0.05" class="form-control" value="1.92" oninput="calculateDynamicPrice()">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Baseline Demand (Units)</label>
+                            <input type="number" id="sim-demand" step="1" class="form-control" value="120" oninput="calculateDynamicPrice()">
+                        </div>
+                        <div class="form-group">
+                            <label>Min Margin Floor (%)</label>
+                            <input type="number" id="sim-margin" step="1" class="form-control" value="15" oninput="calculateDynamicPrice()">
+                        </div>
+                    </div>
+
+                    <!-- Output Results -->
+                    <div class="sim-result-box">
+                        <div class="sim-grid">
+                            <div>
+                                <div class="sim-metric-title">RECOMMENDED PRICE</div>
+                                <div class="sim-metric-val" id="res-price" style="color: #34d399;">£3.54</div>
+                                <div id="res-change" style="font-size: 11px; font-weight: 600; color: #34d399;">+20.0% Uplift</div>
+                            </div>
+                            <div>
+                                <div class="sim-metric-title">EXPECTED PROFIT</div>
+                                <div class="sim-metric-val" id="res-profit" style="color: #60a5fa;">£149.24</div>
+                                <div id="res-profit-gain" style="font-size: 11px; font-weight: 600; color: #60a5fa;">+£25.64 (+20.7%)</div>
+                            </div>
+                        </div>
+                        <div class="rationale-badge" id="res-rationale">
+                            Margin expansion: Price uplift optimizes gross profit per unit over volume decline.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Catalog Sample Explorer Table -->
+        <div class="card table-card">
+            <div class="chart-header">
+                <div class="chart-title">Catalog Dynamic Pricing Recommendations (Sample)</div>
+                <span style="font-size: 12px; color: var(--text-muted);">Displaying 10 of 3,484 Optimized SKUs</span>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>SKU Code</th>
+                        <th>Product Description</th>
+                        <th>Base Price</th>
+                        <th>Unit Cost</th>
+                        <th>Recommended Price</th>
+                        <th>Action</th>
+                        <th>Expected Profit</th>
+                        <th>Strategy Rationale</th>
+                    </tr>
+                </thead>
+                <tbody id="catalog-table-body">
+                    <!-- Populated dynamically via JS -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+        // Pre-loaded catalog samples
+        const sampleProducts = [
+            { sku: "85123A", desc: "WHITE HANGING HEART T-LIGHT HOLDER", base: 2.95, cost: 1.92, rec: 3.54, change: 20.0, profit: 149.24, base_p: 123.60, action: "Increase", rationale: "Inelastic demand: High brand affinity supports margin capture." },
+            { sku: "22423", desc: "REGENCY CAKESTAND 3 TIER", base: 12.75, cost: 8.29, rec: 15.30, change: 20.0, profit: 462.10, base_p: 385.00, action: "Increase", rationale: "Margin expansion: Luxury tier preserves strong demand." },
+            { sku: "84879", desc: "ASSORTED COLOUR BIRD ORNAMENT", base: 1.69, cost: 1.10, rec: 1.52, change: -10.0, profit: 98.40, base_p: 86.20, action: "Decrease", rationale: "Elastic demand: Volume stimulation unlocks incremental gross profit." },
+            { sku: "47566", desc: "PARTY BUNTING", base: 4.95, cost: 3.22, rec: 5.94, change: 20.0, profit: 185.30, base_p: 154.00, action: "Increase", rationale: "Inelastic seasonal event item with low price sensitivity." },
+            { sku: "20725", desc: "LUNCH BAG RED RETROSPOT", base: 1.65, cost: 1.07, rec: 1.98, change: 20.0, profit: 124.50, base_p: 102.30, action: "Increase", rationale: "High-volume commodity with protected margin floor." },
+            { sku: "21212", desc: "PACK OF 72 RETRO SPOT CAKE CASES", base: 0.55, cost: 0.36, rec: 0.66, change: 20.0, profit: 89.20, base_p: 74.10, action: "Increase", rationale: "Sub-£1 wholesale accessory: Price adjustment absorbed seamlessly." },
+            { sku: "22197", desc: "SMALL POPCORN HOLDER", base: 0.85, cost: 0.55, rec: 0.77, change: -9.4, profit: 71.30, base_p: 62.40, action: "Decrease", rationale: "Competitive bulk volume unlock via tactical discounting." },
+            { sku: "85099B", desc: "JUMBO BAG RED RETROSPOT", base: 2.08, cost: 1.35, rec: 2.50, change: 20.0, profit: 210.40, base_p: 172.50, action: "Increase", rationale: "Margin expansion: Staple wholesale packaging product." },
+            { sku: "21931", desc: "JUMBO STORAGE BAG SUKI", base: 2.08, cost: 1.35, rec: 2.49, change: 19.7, profit: 165.10, base_p: 135.20, action: "Increase", rationale: "Optimized against volume attrition model." },
+            { sku: "22383", desc: "LUNCH BAG SUKI DESIGN", base: 1.65, cost: 1.07, rec: 1.98, change: 20.0, profit: 118.00, base_p: 97.40, action: "Increase", rationale: "Stable replenishment item supporting targeted price uplift." }
+        ];
+
+        // Populate Table
+        function renderTable() {
+            const tbody = document.getElementById("catalog-table-body");
+            tbody.innerHTML = sampleProducts.map(p => `
+                <tr>
+                    <td style="font-weight: 700; color: #60a5fa;">${p.sku}</td>
+                    <td>${p.desc}</td>
+                    <td>£${p.base.toFixed(2)}</td>
+                    <td>£${p.cost.toFixed(2)}</td>
+                    <td style="font-weight: 700; color: #34d399;">£${p.rec.toFixed(2)}</td>
+                    <td>
+                        <span class="tag-action ${p.action === 'Increase' ? 'tag-increase' : (p.action === 'Decrease' ? 'tag-decrease' : 'tag-hold')}">
+                            ${p.action} (${p.change > 0 ? '+' : ''}${p.change.toFixed(1)}%)
+                        </span>
+                    </td>
+                    <td style="font-weight: 600;">£${p.profit.toFixed(2)}</td>
+                    <td style="color: var(--text-muted); font-size: 12px;">${p.rationale}</td>
+                </tr>
+            `).join("");
+        }
+
+        // Preset Selector
+        function loadPresetProduct() {
+            const sku = document.getElementById("sim-product-select").value;
+            const item = sampleProducts.find(p => p.sku === sku);
+            if (item) {
+                document.getElementById("sim-price").value = item.base;
+                document.getElementById("sim-cost").value = item.cost;
+                document.getElementById("sim-demand").value = 120;
+                calculateDynamicPrice();
+            }
+        }
+
+        // Live Calculation
+        async function calculateDynamicPrice() {
+            const sku = document.getElementById("sim-product-select").value;
+            const price = parseFloat(document.getElementById("sim-price").value) || 1.0;
+            const cost = parseFloat(document.getElementById("sim-cost").value) || 0.5;
+            const demand = parseFloat(document.getElementById("sim-demand").value) || 10;
+            const margin = parseFloat(document.getElementById("sim-margin").value) || 15;
+
+            try {
+                // Call local backend endpoint
+                const res = await fetch("/pricing/recommend", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        sku: sku,
+                        base_price: price,
+                        unit_cost: cost,
+                        base_demand: demand,
+                        min_gross_margin_pct: margin,
+                        max_price_change_pct: 20.0
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById("res-price").innerText = "£" + data.recommended_price.toFixed(2);
+                    const chgSign = data.price_change_pct > 0 ? "+" : "";
+                    document.getElementById("res-change").innerText = `${chgSign}${data.price_change_pct.toFixed(1)}% Uplift`;
+                    document.getElementById("res-change").style.color = data.price_change_pct >= 0 ? "#34d399" : "#fbbf24";
+                    
+                    document.getElementById("res-profit").innerText = "£" + data.expected_profit.toFixed(2);
+                    const gain = data.expected_profit - data.baseline_profit;
+                    const gainPct = data.baseline_profit > 0 ? (gain / data.baseline_profit * 100) : 0;
+                    document.getElementById("res-profit-gain").innerText = `+£${gain.toFixed(2)} (+${gainPct.toFixed(1)}%)`;
+                    document.getElementById("res-rationale").innerText = data.rationale;
+                }
+            } catch (err) {
+                console.error("API error", err);
+            }
+        }
+
+        // Render Chart.js
+        function renderCharts() {
+            const ctx = document.getElementById("financialChart").getContext("2d");
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Revenue (£ Thousands)', 'Gross Profit (£ Thousands)'],
+                    datasets: [
+                        {
+                            label: 'Static Baseline Pricing',
+                            data: [375.34, 186.20],
+                            backgroundColor: 'rgba(148, 163, 184, 0.6)',
+                            borderColor: '#94a3b8',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Optimized Dynamic Pricing',
+                            data: [395.46, 213.05],
+                            backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#cbd5e1', font: { family: 'Inter', size: 12 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': £' + context.parsed.y.toFixed(2) + 'k';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { family: 'Inter', weight: 600 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+                            ticks: { color: '#94a3b8', callback: val => '£' + val + 'k' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener("DOMContentLoaded", () => {
+            renderTable();
+            renderCharts();
+            calculateDynamicPrice();
+        });
+    </script>
+</body>
+</html>

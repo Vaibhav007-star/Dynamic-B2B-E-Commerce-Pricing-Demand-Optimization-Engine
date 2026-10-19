@@ -1,0 +1,2 @@
+Metric_Group,Total_SKUs_Analyzed,Baseline_Revenue_GBP,Optimized_Revenue_GBP,Revenue_Uplift_GBP,Revenue_Uplift_Pct,Baseline_Gross_Profit_GBP,Optimized_Gross_Profit_GBP,Gross_Profit_Uplift_GBP,Gross_Profit_Uplift_Pct,Baseline_Gross_Margin_Pct,Optimized_Gross_Margin_Pct,Price_Increases_Count,Price_Decreases_Count,Price_Holds_Count,Cost_Floor_Violations
+Executive Financials,3484,375395.56,395518.85,20123.29,5.36,186195.54,213047.98,26852.44,14.42,49.6,53.87,2160,1306,18,0

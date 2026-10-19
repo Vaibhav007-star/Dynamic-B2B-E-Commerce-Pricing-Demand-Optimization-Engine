@@ -1,0 +1,19 @@
+services:
+  pricing-api:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    container_name: dynamic-b2b-pricing-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=production
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
