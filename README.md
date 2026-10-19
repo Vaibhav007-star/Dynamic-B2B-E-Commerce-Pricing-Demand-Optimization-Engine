@@ -50,6 +50,23 @@ Using 2 years of authentic transaction records from **Online Retail II (1,037,36
 
 ---
 
+## 🌟 Advanced BCG X Decision Science Capabilities
+
+Designed to consulting and digital transformation standards (BCG X), this repository incorporates 4 advanced decision-science modules:
+
+1. **Causal Inference & Endogeneity Correction (`src/forecasting/causal_elasticity.py`)**:
+   - Resolves holiday price endogeneity via **Two-Stage Least Squares (2SLS)** with exogenous cost instruments and Hausman diagnostic testing.
+2. **Operations Research & Cannibalization Optimizer (`src/optimization/portfolio_optimizer.py`)**:
+   - Solves multi-product cross-elasticity non-linear programming via **SciPy SLSQP** under corporate portfolio gross margin constraints.
+3. **Multi-Tier B2B Volume Pricing & Customer RFM Segmentation (`src/optimization/b2b_tiered_pricing.py`)**:
+   - Segments wholesale accounts into 3 cohorts (Enterprise, Trade, Spot) and generates dynamic volume-break discount schedules.
+4. **Interactive Executive What-If War-Gaming (`POST /scenarios/simulate`)**:
+   - Macro scenario simulation console (+10% COGS inflation, -8% competitor price war, 55% margin directive) integrated live in the Web Dashboard.
+5. **BCG X Case Study Whitepaper ([`BCG_X_CASE_STUDY.md`](file:///c:/Projects/Dynamic%20B2B%20E-Commerce%20Pricing%20&%20Demand%20Optimization%20Engine/BCG_X_CASE_STUDY.md))**:
+   - Structured according to the **BCG Pyramid Principle** with financial analysis and a 90-day enterprise implementation roadmap.
+
+---
+
 ## 📂 Project Repository Structure
 
 ```

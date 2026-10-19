@@ -427,6 +427,30 @@
             </div>
         </div>
 
+        <!-- Executive Scenario War-Gaming Panel -->
+        <div class="card" style="margin-bottom: 24px; padding: 18px 24px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(59, 130, 246, 0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 18px;">🎯</span>
+                    <strong style="font-family: var(--font-head); font-size: 15px; letter-spacing: -0.2px;">Executive Strategy War-Gaming Console</strong>
+                    <span style="font-size: 11px; color: var(--text-muted);">(Stress-test portfolio against macro shocks)</span>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" id="btn-scen-baseline" onclick="triggerScenario('baseline', 0, 0, 15)">🟢 Baseline Optimal</button>
+                    <button class="btn btn-outline" id="btn-scen-cost" onclick="triggerScenario('cost_inflation', 10, 0, 15)">🔴 +10% Cost Inflation</button>
+                    <button class="btn btn-outline" id="btn-scen-war" onclick="triggerScenario('competitor_war', 0, 8, 15)">🟡 -8% Competitor War</button>
+                    <button class="btn btn-outline" id="btn-scen-margin" onclick="triggerScenario('margin_mandate', 0, 0, 55)">🟣 55% Margin Directive</button>
+                </div>
+            </div>
+            <div id="scenario-insight-box" style="background: rgba(30, 41, 59, 0.6); border-left: 4px solid var(--accent-blue); padding: 10px 16px; border-radius: 6px; font-size: 13px; color: #cbd5e1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <span id="scenario-name" style="font-weight: 700; color: #60a5fa;">Baseline Optimal Dynamic Strategy:</span>
+                    <span id="scenario-rec" style="margin-left: 6px;">Execute balanced portfolio pricing: +2,160 targeted price increases, -1,306 elastic volume-unlock decreases.</span>
+                </div>
+                <span id="scenario-delta-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 11px;">+£26,852 (+14.4%) Profit Uplift</span>
+            </div>
+        </div>
+
         <!-- 4 Primary KPI Cards -->
         <div class="grid-metrics">
             <div class="card">
@@ -656,10 +680,60 @@
             }
         }
 
+        let chartInstance = null;
+
+        async function triggerScenario(type, costShock, compCut, marginFloor) {
+            // Style active button
+            ['baseline', 'cost', 'war', 'margin'].forEach(k => {
+                const b = document.getElementById('btn-scen-' + k);
+                if (b) b.className = 'btn btn-outline';
+            });
+            const keyMap = { 'baseline': 'baseline', 'cost_inflation': 'cost', 'competitor_war': 'war', 'margin_mandate': 'margin' };
+            const activeBtn = document.getElementById('btn-scen-' + keyMap[type]);
+            if (activeBtn) activeBtn.className = 'btn btn-primary';
+
+            try {
+                const res = await fetch('/scenarios/simulate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scenario_type: type,
+                        cost_shock_pct: costShock,
+                        competitor_cut_pct: compCut,
+                        target_margin_floor_pct: marginFloor
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('kpi-profit').innerText = '£' + Math.round(data.portfolio_profit).toLocaleString();
+                    document.getElementById('kpi-revenue').innerText = '£' + Math.round(data.portfolio_revenue).toLocaleString();
+                    document.getElementById('kpi-margin').innerText = data.portfolio_margin_pct.toFixed(2) + '%';
+                    
+                    document.getElementById('scenario-name').innerText = data.scenario_name + ':';
+                    document.getElementById('scenario-rec').innerText = data.actionable_mitigation;
+                    
+                    const badge = document.getElementById('scenario-delta-badge');
+                    const sign = data.profit_delta_vs_baseline_gbp >= 0 ? '+' : '';
+                    badge.innerText = `${sign}£${Math.round(data.profit_delta_vs_baseline_gbp).toLocaleString()} (${sign}${data.profit_delta_vs_baseline_pct.toFixed(1)}%) vs Static`;
+                    badge.style.background = data.profit_delta_vs_baseline_gbp >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+                    badge.style.color = data.profit_delta_vs_baseline_gbp >= 0 ? '#34d399' : '#f87171';
+
+                    // Update Chart
+                    if (chartInstance) {
+                        chartInstance.data.datasets[1].data = [data.portfolio_revenue / 1000, data.portfolio_profit / 1000];
+                        chartInstance.update();
+                    }
+                }
+            } catch (err) {
+                console.error("Scenario simulation error", err);
+            }
+        }
+
         // Render Chart.js
         function renderCharts() {
             const ctx = document.getElementById("financialChart").getContext("2d");
-            new Chart(ctx, {
+            chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['Revenue (£ Thousands)', 'Gross Profit (£ Thousands)'],

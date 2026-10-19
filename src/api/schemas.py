@@ -97,3 +97,20 @@ class BusinessImpactResponse(BaseModel):
     optimized_units_demanded: float
     price_actions: Dict[str, int]
     safety_checks: Dict[str, Any]
+
+class ScenarioSimulateRequest(BaseModel):
+    scenario_type: str = Field("baseline", json_schema_extra={"example": "cost_inflation"})
+    cost_shock_pct: float = Field(0.0, json_schema_extra={"example": 10.0})
+    competitor_cut_pct: float = Field(0.0, json_schema_extra={"example": 0.0})
+    target_margin_floor_pct: float = Field(15.0, json_schema_extra={"example": 15.0})
+
+class ScenarioSimulateResponse(BaseModel):
+    scenario_name: str
+    portfolio_revenue: float
+    portfolio_profit: float
+    portfolio_margin_pct: float
+    profit_delta_vs_baseline_gbp: float
+    profit_delta_vs_baseline_pct: float
+    recommended_price_uplift_pct: float
+    strategic_recommendation: str
+    actionable_mitigation: str

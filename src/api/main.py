@@ -14,7 +14,8 @@ from src.api.schemas import (
     HealthResponse, ProductListResponse,
     ForecastRequest, ForecastResponse,
     PricingRecommendRequest, PricingRecommendResponse,
-    PricingResultsResponse, BusinessImpactResponse
+    PricingResultsResponse, BusinessImpactResponse,
+    ScenarioSimulateRequest, ScenarioSimulateResponse
 )
 from src.api.service import service
 
@@ -109,6 +110,19 @@ def get_business_impact():
         return service.get_business_impact()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@app.post("/scenarios/simulate", response_model=ScenarioSimulateResponse, tags=["Executive Scenario War-Gaming"])
+def simulate_scenario(request: ScenarioSimulateRequest):
+    """
+    Executes executive what-if war gaming simulations:
+    - Supply Chain Cost Inflation (+10% COGS Shock)
+    - Competitor Price War (-8% Market Cut)
+    - Executive Margin Expansion Mandate (55% Portfolio Floor)
+    """
+    try:
+        return service.simulate_executive_scenario(request)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
