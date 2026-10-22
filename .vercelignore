@@ -1,0 +1,10 @@
+.venv/
+.pytest_cache/
+.vscode/
+data/raw/
+data/processed/b2b_transactions_clean.parquet
+data/processed/demand_weekly_panel.parquet
+notebooks/
+tests/
+writing-block (1).md
+*.log

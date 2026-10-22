@@ -20,16 +20,22 @@ from src.api.schemas import (
     ScenarioSimulateRequest, ScenarioSimulateResponse
 )
 
-MODEL_PATH = Path("models/demand_forecaster_best.joblib")
-PANEL_PATH = Path("data/processed/demand_weekly_panel.parquet")
-TRANSACTIONS_PATH = Path("data/processed/b2b_transactions_clean.parquet")
-RECOMMENDATIONS_PATH = Path("data/outputs/pricing_recommendations.parquet")
-IMPACT_JSON_PATH = Path("data/outputs/business_impact_summary.json")
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+MODEL_PATH = BASE_DIR / "models" / "demand_forecaster_best.joblib"
+PANEL_PATH = BASE_DIR / "data" / "processed" / "demand_weekly_panel.parquet"
+TRANSACTIONS_PATH = BASE_DIR / "data" / "processed" / "b2b_transactions_clean.parquet"
+RECOMMENDATIONS_CSV_FULL = BASE_DIR / "data" / "outputs" / "pricing_recommendations.csv"
+RECOMMENDATIONS_PATH = BASE_DIR / "data" / "outputs" / "pricing_recommendations.parquet"
+RECOMMENDATIONS_CSV_PATH = BASE_DIR / "data" / "outputs" / "pricing_recommendations_sample.csv"
+RECOMMENDATIONS_JSON_PATH = BASE_DIR / "data" / "outputs" / "pricing_recommendations.json"
+CATALOG_JSON_PATH = BASE_DIR / "data" / "outputs" / "catalog_products.json"
+ELASTICITIES_JSON_PATH = BASE_DIR / "data" / "outputs" / "sku_elasticities.json"
+IMPACT_JSON_PATH = BASE_DIR / "data" / "outputs" / "business_impact_summary.json"
 
 class PricingService:
     def __init__(self):
         self.forecaster_bundle = None
-        self.optimizer = None
+        self.optimizer = DynamicPriceOptimizer()
         self.products_df = None
         self.recommendations_df = None
         self.impact_summary = None
@@ -40,51 +46,88 @@ class PricingService:
         if MODEL_PATH.exists():
             self.forecaster_bundle = joblib.load(MODEL_PATH)
             print("Loaded demand forecaster bundle.")
-        
-        # 2. Load panel & pre-fit optimizer
-        if PANEL_PATH.exists():
-            panel = pd.read_parquet(PANEL_PATH)
-            self.optimizer = DynamicPriceOptimizer()
-            self.optimizer.fit_elasticities(panel)
-            
-            # Prepare fast product lookup
-            tx_unit_cost = {}
-            if TRANSACTIONS_PATH.exists():
-                tx_df = pd.read_parquet(TRANSACTIONS_PATH, columns=["StockCode", "Unit_Cost"])
-                tx_unit_cost = tx_df.groupby("StockCode")["Unit_Cost"].first().to_dict()
-                
-            latest = panel.sort_values("Week_Start").groupby("StockCode").last().reset_index()
-            latest["unit_cost"] = latest["StockCode"].map(lambda sc: tx_unit_cost.get(sc, round(float(latest.loc[latest["StockCode"]==sc, "Avg_Price"].values[0]) * 0.65, 2)))
-            latest["Description"] = latest["Description"].fillna("Product " + latest["StockCode"].astype(str))
-            self.products_df = latest
-            print(f"Loaded {len(self.products_df):,} products into memory.")
 
-        # 3. Load pre-calculated recommendations
-        if RECOMMENDATIONS_PATH.exists():
-            self.recommendations_df = pd.read_parquet(RECOMMENDATIONS_PATH)
-            print(f"Loaded {len(self.recommendations_df):,} cached pricing recommendations.")
+        # 2. Fast load pre-calculated elasticities
+        if ELASTICITIES_JSON_PATH.exists():
+            with open(ELASTICITIES_JSON_PATH, "r", encoding="utf-8") as f:
+                self.optimizer.sku_elasticities = json.load(f)
+            print(f"Loaded {len(self.optimizer.sku_elasticities):,} precomputed SKU elasticities.")
+        elif PANEL_PATH.exists():
+            try:
+                panel = pd.read_parquet(PANEL_PATH)
+                self.optimizer.fit_elasticities(panel)
+            except Exception:
+                pass
 
-        # 4. Load impact summary
+        # 3. Fast load catalog products
+        if CATALOG_JSON_PATH.exists():
+            with open(CATALOG_JSON_PATH, "r", encoding="utf-8") as f:
+                prods_data = json.load(f)
+            self.products_df = pd.DataFrame(prods_data)
+            print(f"Loaded {len(self.products_df):,} products from catalog cache.")
+        elif PANEL_PATH.exists():
+            try:
+                panel = pd.read_parquet(PANEL_PATH)
+                tx_unit_cost = {}
+                if TRANSACTIONS_PATH.exists():
+                    tx_df = pd.read_parquet(TRANSACTIONS_PATH, columns=["StockCode", "Unit_Cost"])
+                    tx_unit_cost = tx_df.groupby("StockCode")["Unit_Cost"].first().to_dict()
+
+                latest = panel.sort_values("Week_Start").groupby("StockCode").last().reset_index()
+                latest["unit_cost"] = latest["StockCode"].map(lambda sc: tx_unit_cost.get(sc, round(float(latest.loc[latest["StockCode"]==sc, "Avg_Price"].values[0]) * 0.65, 2)))
+                latest["Description"] = latest["Description"].fillna("Product " + latest["StockCode"].astype(str))
+                latest["sku"] = latest["StockCode"]
+                latest["base_price"] = latest["Avg_Price"]
+                latest["description"] = latest["Description"]
+                latest["current_demand"] = latest["Weekly_Demand"]
+                self.products_df = latest
+                print(f"Loaded {len(self.products_df):,} products into memory.")
+            except Exception:
+                pass
+
+        # 4. Load pre-calculated recommendations (CSV first for zero-dependency portability)
+        if RECOMMENDATIONS_CSV_FULL.exists():
+            self.recommendations_df = pd.read_csv(RECOMMENDATIONS_CSV_FULL)
+            print(f"Loaded {len(self.recommendations_df):,} cached pricing recommendations from CSV.")
+        elif RECOMMENDATIONS_PATH.exists():
+            try:
+                self.recommendations_df = pd.read_parquet(RECOMMENDATIONS_PATH)
+                print(f"Loaded {len(self.recommendations_df):,} cached pricing recommendations from parquet.")
+            except Exception:
+                if RECOMMENDATIONS_CSV_PATH.exists():
+                    self.recommendations_df = pd.read_csv(RECOMMENDATIONS_CSV_PATH)
+                    print(f"Loaded {len(self.recommendations_df):,} cached pricing recommendations from CSV sample.")
+        elif RECOMMENDATIONS_CSV_PATH.exists():
+            self.recommendations_df = pd.read_csv(RECOMMENDATIONS_CSV_PATH)
+            print(f"Loaded {len(self.recommendations_df):,} cached pricing recommendations from CSV sample.")
+
+        # Populate products or elasticities fallback from recommendations if needed
+        if self.products_df is None and self.recommendations_df is not None:
+            self.products_df = self.recommendations_df[["sku", "description", "base_price", "unit_cost", "baseline_demand"]].rename(columns={"baseline_demand": "current_demand"})
+        if not self.optimizer.sku_elasticities and self.recommendations_df is not None:
+            self.optimizer.sku_elasticities = dict(zip(self.recommendations_df["sku"].astype(str), self.recommendations_df["elasticity"].astype(float)))
+
+        # 5. Load impact summary
         if IMPACT_JSON_PATH.exists():
-            with open(IMPACT_JSON_PATH, "r") as f:
+            with open(IMPACT_JSON_PATH, "r", encoding="utf-8") as f:
                 self.impact_summary = json.load(f)
 
     def get_products(self, page: int = 1, page_size: int = 50) -> ProductListResponse:
         if self.products_df is None or len(self.products_df) == 0:
             return ProductListResponse(total_products=0, page=page, page_size=page_size, products=[])
-        
+
         total = len(self.products_df)
         start = (page - 1) * page_size
         end = start + page_size
         sub = self.products_df.iloc[start:end]
-        
+
         items = [
             ProductItem(
-                sku=str(row["StockCode"]),
-                description=str(row.get("Description", "Product " + str(row["StockCode"]))),
-                base_price=round(float(row.get("Avg_Price", 1.0)), 2),
+                sku=str(row.get("sku") or row.get("StockCode")),
+                description=str(row.get("description") or row.get("Description") or f"Product {row.get('sku')}"),
+                base_price=round(float(row.get("base_price", row.get("Avg_Price", 1.0))), 2),
                 unit_cost=round(float(row.get("unit_cost", 0.65)), 2),
-                current_demand=round(float(row.get("Weekly_Demand", 0.0)), 1)
+                current_demand=round(float(row.get("current_demand", row.get("Weekly_Demand", 0.0))), 1)
             )
             for _, row in sub.iterrows()
         ]

@@ -18,4 +18,9 @@ data/raw/*.csv
 data/processed/*.parquet
 !data/processed/b2b_transactions_sample.csv
 data/outputs/*.parquet
+!data/outputs/pricing_recommendations.parquet
 !data/outputs/*_sample.csv
+.vercel/
+
+.vercel
+.env*

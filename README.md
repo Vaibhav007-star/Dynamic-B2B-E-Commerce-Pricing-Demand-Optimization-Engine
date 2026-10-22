@@ -1,5 +1,9 @@
 # Dynamic B2B E-Commerce Pricing & Demand Optimization Engine
 
+> 🚀 **Live Production Deployment**: [https://dynamic-b2b-pricing-engine.vercel.app](https://dynamic-b2b-pricing-engine.vercel.app)  
+> 📖 **Interactive API Docs (Swagger UI)**: [https://dynamic-b2b-pricing-engine.vercel.app/docs](https://dynamic-b2b-pricing-engine.vercel.app/docs)  
+> 📊 **Live Executive Dashboard**: [https://dynamic-b2b-pricing-engine.vercel.app/dashboard](https://dynamic-b2b-pricing-engine.vercel.app/dashboard)
+
 An end-to-end, production-grade Machine Learning and Business Intelligence solution designed to forecast wholesale demand, recommend profit-maximizing dynamic prices, enforce strict margin and volatility guardrails, and quantify business impact against static baseline pricing.
 
 ---
